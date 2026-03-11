@@ -49,7 +49,12 @@
             padding: 15px; border-radius: 4px; font-size: 14px; white-space: pre-wrap; color: #aaa; margin-bottom: 10px;
         }
         
-        /* Botões de Cópia e WhatsApp */
+        .alert-info {
+            color: #ffb74d; font-size: 12px; text-align: center; margin-bottom: 12px;
+            font-weight: bold; padding: 8px; border: 1px dashed #ffb74d; border-radius: 8px;
+            background: rgba(255, 183, 77, 0.05);
+        }
+
         .btn-main {
             background-color: #00e676; color: #000; border: none; padding: 15px;
             border-radius: 8px; font-weight: bold; font-size: 16px; width: 100%; cursor: pointer;
@@ -71,7 +76,6 @@
         .status-msg { text-align: center; font-size: 12px; margin-top: 10px; color: #00e676; visibility: hidden; }
         .footer-sig { margin-top: 40px; font-size: 10px; color: #444; text-align: center; }
         
-        /* Container para campos extras de Turismo */
         #campos-turismo { display: none; }
     </style>
 </head>
@@ -119,27 +123,36 @@
 
     <div class="form-group">
         <label>Número da Van</label>
-        <input type="text" id="van" placeholder="Ex: 130" oninput="validarVisibilidade(); salvarDados()">
+        <input type="text" id="van" placeholder="Ex: 107" oninput="validarVisibilidade(); salvarDados()">
     </div>
 
     <div class="form-group">
         <label>Adicionais</label>
+        <div class="check-group lock-on-abast" onclick="toggleCheck('saidaOk', event)">
+            <input type="checkbox" id="saidaOk" onchange="validarVisibilidade()" onclick="event.stopPropagation()">
+            <span>SAÍDA OK</span>
+        </div>
+        
         <div class="check-group lock-on-abast" onclick="toggleCheck('icmbio', event)">
             <input type="checkbox" id="icmbio" onchange="validarVisibilidade()" onclick="event.stopPropagation()">
             <span>ICMbio</span>
         </div>
+        
         <div class="check-group" onclick="toggleCheck('incHorario', event)">
             <input type="checkbox" id="incHorario" checked onchange="validarVisibilidade()" onclick="event.stopPropagation()">
             <span>Incluir Horário no Resumo (Padrão)</span>
         </div>
+        
         <div class="check-group lock-on-abast" onclick="toggleCheck('bateVolta', event)">
             <input type="checkbox" id="bateVolta" onchange="validarVisibilidade()" onclick="event.stopPropagation()">
             <span>Bate e Volta</span>
         </div>
+        
         <div class="check-group lock-on-abast" onclick="toggleCheck('segundoHorario', event)">
             <input type="checkbox" id="segundoHorario" onchange="validarVisibilidade()" onclick="event.stopPropagation()">
             <span>Segundo Horário</span>
         </div>
+        
         <div class="check-group lock-on-abast" onclick="toggleCheck('extraAbastecimento', event)">
             <input type="checkbox" id="extraAbastecimento" onchange="validarVisibilidade()" onclick="event.stopPropagation()">
             <span>+ Abastecimento</span>
@@ -158,6 +171,8 @@
         <div id="preview-curto" class="preview-box"></div>
     </div>
 
+    <div class="alert-info">⚠️ Verifique primeiro o Local de Embarque / Atividade</div>
+
     <button class="btn-main" id="btnCopiar" onclick="copiarRelatorio('completo')">COPIAR COMPLETO</button>
     <button class="btn-secondary" id="btnCopiarCurto" onclick="copiarRelatorio('curto')">COPIAR CURTO</button>
     
@@ -171,14 +186,12 @@
     <div class="footer-sig">by Tiago C Araujo – Araújo II – mat 3240 – Bel-tour 🚌🗽🚠😎👨‍✈️</div>
 </div>
 <script>
-    // Referências e Inicialização de Horários
     const sH = document.getElementById('hora');
     const sM = document.getElementById('minuto');
     
     for(let i=0; i<24; i++) { let h = i<10?'0'+i:i; sH.options[sH.options.length] = new Option(h, h); }
     for(let i=0; i<60; i++) { let m = i<10?'0'+i:i; sM.options[sM.options.length] = new Option(m, m); }
 
-    // Setar hora atual e carregar dados salvos
     window.onload = () => {
         const agora = new Date();
         sH.value = agora.getHours() < 10 ? '0' + agora.getHours() : agora.getHours();
@@ -186,7 +199,6 @@
         carregarDados();
     };
 
-    // FUNÇÕES DE MEMÓRIA (PERSISTÊNCIA)
     function salvarDados() {
         localStorage.setItem('van_bel_tour', document.getElementById('van').value);
         localStorage.setItem('motorista_bel_tour', document.getElementById('nome-motorista').value);
@@ -218,7 +230,6 @@
         const locks = document.querySelectorAll('.lock-on-abast');
         const campoTurismo = document.getElementById('campos-turismo');
         
-        // Lógica de Labels e Visibilidade
         document.getElementById('label-quantidade').innerText = (emb === "ABASTECIMENTO") ? "KM" : "Qtd. Integrantes";
         campoTurismo.style.display = (emb === "TURISMO") ? "block" : "none";
 
@@ -236,7 +247,7 @@
 
     function validarVisibilidade() {
         const inputs = ['quantidade', 'van', 'nome-motorista', 'origem', 'destino'];
-        const checks = ['bateVolta', 'segundoHorario', 'extraAbastecimento', 'icmbio'];
+        const checks = ['bateVolta', 'segundoHorario', 'extraAbastecimento', 'icmbio', 'saidaOk'];
         
         let preenchido = inputs.some(id => document.getElementById(id).value) || 
                          checks.some(id => document.getElementById(id).checked);
@@ -251,13 +262,13 @@
         const emb = document.getElementById('embarque').value;
         const h = sH.value;
         const mi = sM.value;
-        const q = document.getElementById('quantidade').value || "0";
-        const vRaw = document.getElementById('van').value || ""; 
+        const q = document.getElementById('quantidade').value;
+        const vRaw = document.getElementById('van').value; 
         const n = document.getElementById('nome-motorista').value.toUpperCase();
-        
         const orig = document.getElementById('origem').value.toUpperCase();
         const dest = document.getElementById('destino').value.toUpperCase();
         
+        const sok = document.getElementById('saidaOk').checked;
         const bv = document.getElementById('bateVolta').checked;
         const sh = document.getElementById('segundoHorario').checked;
         const abast = document.getElementById('extraAbastecimento').checked;
@@ -265,36 +276,50 @@
         const incH = document.getElementById('incHorario').checked;
         
         const saudacao = obterSaudacao();
-        const vFormatada = (vRaw && vRaw !== "") ? ((!vRaw.toUpperCase().startsWith("VTR")) ? "VTR " + vRaw : vRaw) : "";
+        const vFormatada = (vRaw) ? ((!vRaw.toUpperCase().startsWith("VTR")) ? "VTR " + vRaw : vRaw) : "";
 
         if (tipo === 'curto') {
             let resumo = `${saudacao}\n`;
             if (incH) resumo += `${h}:${mi}\n`;
-            resumo += `\n${vFormatada}\n`;
-            resumo += `${emb}${icm ? " (ICMbio)" : ""}\n`;
-            if (emb === "TURISMO" && (orig || dest)) resumo += `Trajeto: ${orig} ➡️ ${dest}\n`;
-            resumo += `${q} ${(emb === "ABASTECIMENTO") ? 'KM' : 'Integrantes'}\n`;
-            if (sh) resumo += `Segundo Horário `;
+            if (vFormatada) resumo += `\n${vFormatada}\n`;
+            
+            resumo += `${emb}${icm ? " (ICMbio)" : ""}${sok ? " - SAÍDA OK" : ""}\n`;
+            
+            // Troca de ➡️ por X e remoção de ícones conforme solicitado
+            if (emb === "TURISMO" && (orig || dest)) {
+                resumo += `Trajeto: ${orig || "?"} X ${dest || "?"}\n`;
+            }
+            
+            if (q) resumo += `${q} ${(emb === "ABASTECIMENTO") ? 'KM' : 'Integrantes'}\n`;
+            
             let extras = [];
+            if (sh) extras.push("Segundo Horário");
             if (bv) extras.push("Bate e Volta");
             if (abast) extras.push("+ Abastecimento");
             if (extras.length > 0) resumo += `(${extras.join(" / ")})`;
-            if (n) resumo += `\n\n👤 ${n}`;
-            return resumo;
+            
+            if (n) resumo += `\n\n${n}`;
+            return resumo.trim();
         } else {
             let texto = `${saudacao}\n\n*MOVIMENTAÇÃO DE VANS*\n`;
-            texto += `📍 *Local:* ${emb}${icm ? " (ICMbio)" : ""}\n`;
-            if (emb === "TURISMO") texto += `🛣️ *Trajeto:* ${orig || "---"} ➡️ ${dest || "---"}\n`;
+            texto += `📍 *Local:* ${emb}${icm ? " (ICMbio)" : ""}${sok ? " - SAÍDA OK" : ""}\n`;
+            
+            if (emb === "TURISMO" && (orig || dest)) {
+                texto += `🛣️ *Trajeto:* ${orig || "---"} ➡️ ${dest || "---"}\n`;
+            }
+            
             texto += `⏰ *Horário:* ${h}:${mi}\n`;
-            texto += (emb === "ABASTECIMENTO") ? `🛣️ *KM:* ${q}\n` : `👥 *Integrantes:* ${q}\n`;
+            if (q) texto += (emb === "ABASTECIMENTO") ? `🛣️ *KM:* ${q}\n` : `👥 *Integrantes:* ${q}\n`;
             if (vRaw) texto += `🚐 *Van:* ${vRaw}\n`;
-            if (sh) texto += `\n⌛ Segundo Horário`;
+            
             let extras = [];
+            if (sh) extras.push("Segundo Horário");
             if (bv) extras.push("Bate e Volta");
             if (abast) extras.push("+ Abastecimento");
             if (extras.length > 0) texto += `\n📝 *Obs:* ${extras.join(" / ")}`;
             if (n) texto += `\n\n👤 *Motorista:* ${n}`;
-            return texto;
+            
+            return texto.trim();
         }
     }
 
@@ -312,11 +337,15 @@
         window.open(`https://wa.me/?text=${texto}`, '_blank');
     }
 
+    // Função de limpeza total, incluindo motorista e storage
     function limparCampos() {
-        ['quantidade', 'origem', 'destino'].forEach(id => document.getElementById(id).value = "");
+        ['quantidade', 'origem', 'destino', 'nome-motorista'].forEach(id => {
+            document.getElementById(id).value = "";
+        });
         document.querySelectorAll('input[type=checkbox]').forEach(el => {
             if(el.id !== 'incHorario') el.checked = false;
         });
+        salvarDados(); // Limpa no localStorage também
         verificarTipo();
     }
 </script>
