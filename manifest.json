@@ -1,0 +1,16 @@
+{
+  "name": "Bel-tour: Movimentação de Vans",
+  "short_name": "BelTourVans",
+  "description": "Sistema de relatórios operacionais para motoristas",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#00e676",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3448/3448339.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
